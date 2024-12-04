@@ -1,7 +1,7 @@
 import requests
 import json
-import os
 from tqdm import tqdm
+
 
 def get_vk_photos(user_id, vk_token):
     url = 'https://api.vk.com/method/photos.get'
@@ -20,6 +20,7 @@ def get_vk_photos(user_id, vk_token):
         return []
 
     return data['response']['items']
+
 
 def upload_to_yadisk(photo_url, file_name, ya_token):
     headers = {
@@ -48,16 +49,29 @@ def main():
         print("Нет доступных фотографий для загрузки.")
         return
 
-    photos.sort(key=lambda x: max(x['sizes'], key=lambda s: s['width'] * s['height']), reverse=True)
-    top_photos = photos[:5]
+    likes_dict = {}
 
-    os.makedirs('photos', exist_ok=True)
+    for photo in photos:
+        likes_count = photo['likes']['count']
+        creation_date = photo['date']
+
+        if likes_count not in likes_dict:
+            likes_dict[likes_count] = []
+
+        likes_dict[likes_count].append((photo, creation_date))
+
+    sorted_photos = []
+
+    for likes_count in sorted(likes_dict.keys(), reverse=True):
+        sorted_photos.extend(sorted(likes_dict[likes_count], key=lambda x: x[1], reverse=True))
 
     json_data = []
 
-    for photo in tqdm(top_photos):
+    for photo_info in tqdm(sorted_photos[:5]):
+        photo, _ = photo_info
         max_size_photo = max(photo['sizes'], key=lambda s: s['width'] * s['height'])
         file_name = f"{photo['likes']['count']}.jpg"
+
         upload_to_yadisk(max_size_photo['url'], file_name, ya_token)
 
         json_data.append({
