@@ -2,7 +2,6 @@ import requests
 import json
 from tqdm import tqdm
 
-
 def get_vk_photos(user_id, vk_token):
     url = 'https://api.vk.com/method/photos.get'
     params = {
@@ -21,7 +20,6 @@ def get_vk_photos(user_id, vk_token):
 
     return data['response']['items']
 
-
 def upload_to_yadisk(photo_url, file_name, ya_token):
     headers = {
         'Authorization': f'OAuth {ya_token}'
@@ -36,7 +34,6 @@ def upload_to_yadisk(photo_url, file_name, ya_token):
 
     photo_response = requests.get(photo_url)
     requests.put(upload_url, data=photo_response.content)
-
 
 def main():
     user_id = input("Введите ID пользователя ВК: ")
@@ -63,12 +60,14 @@ def main():
     sorted_photos = []
 
     for likes_count in sorted(likes_dict.keys(), reverse=True):
+        # Сортируем по дате создания внутри одного количества лайков
         sorted_photos.extend(sorted(likes_dict[likes_count], key=lambda x: x[1], reverse=True))
 
     json_data = []
 
-    for photo_info in tqdm(sorted_photos[:5]):
+    for photo_info in tqdm(sorted_photos):
         photo, _ = photo_info
+        # Получаем максимальный размер для каждой фотографии
         max_size_photo = max(photo['sizes'], key=lambda s: s['width'] * s['height'])
         file_name = f"{photo['likes']['count']}.jpg"
 
@@ -81,7 +80,6 @@ def main():
 
     with open('photos.json', 'w') as json_file:
         json.dump(json_data, json_file, indent=4)
-
 
 if __name__ == '__main__':
     main()
